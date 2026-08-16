@@ -5,82 +5,115 @@ import argparse
 # ==================== AST NODES ====================
 
 class ASTNode:
-    def to_tree(self, prefix=""):
+    def __init__(self):
+        self.attrs = {}  # dicionário para atributos extras (tipo, escopo, etc.)
+
+    def to_tree(self, prefix="", show_attr=False):
         """Retorna uma lista de strings, cada uma uma linha da árvore.
         A primeira linha é o nome do nó (sem prefixo).
-        As demais já têm o prefixo passado."""
+        As demais já têm o prefixo passado.
+        Se show_attr for True, exibe os atributos armazenados em self.attrs.
+        """
         raise NotImplementedError
+
+    def _format_attrs(self, prefix, show_attr):
+        """Retorna linhas representando os atributos, se show_attr for True e houver atributos."""
+        if not show_attr or not self.attrs:
+            return []
+        lines = []
+        # Adiciona um cabeçalho "attrs:" (opcional)
+        # Vamos listar cada atributo como uma linha com prefixo
+        attrs_items = list(self.attrs.items())
+        for i, (key, value) in enumerate(attrs_items):
+            is_last = (i == len(attrs_items) - 1)
+            connector = "└── " if is_last else "├── "
+            child_prefix = prefix + ("    " if is_last else "│   ")
+            lines.append(prefix + connector + f"{key}: {value}")
+        return lines
+
 
 class Program(ASTNode):
     def __init__(self, statements):
+        super().__init__()
         self.statements = statements
 
-    def to_tree(self, prefix=""):
+    def to_tree(self, prefix="", show_attr=False):
         lines = ["Programa"]
+        # Atributos do nó (se houver)
+        lines.extend(self._format_attrs(prefix, show_attr))
         for i, stmt in enumerate(self.statements):
             is_last = (i == len(self.statements) - 1)
             child_prefix = prefix + ("    " if is_last else "│   ")
             connector = "└── " if is_last else "├── "
-            stmt_lines = stmt.to_tree(child_prefix)
-            # stmt_lines[0] é o nome do filho
+            stmt_lines = stmt.to_tree(child_prefix, show_attr)
             lines.append(prefix + connector + stmt_lines[0])
-            # as demais linhas já têm child_prefix
             lines.extend(stmt_lines[1:])
         return lines
 
+
 class DeclaracaoConstantes(ASTNode):
     def __init__(self, vinculos):
+        super().__init__()
         self.vinculos = vinculos
 
-    def to_tree(self, prefix=""):
+    def to_tree(self, prefix="", show_attr=False):
         lines = ["DeclaracaoConstantes"]
+        lines.extend(self._format_attrs(prefix, show_attr))
         for i, vinculo in enumerate(self.vinculos):
             is_last = (i == len(self.vinculos) - 1)
             child_prefix = prefix + ("    " if is_last else "│   ")
             connector = "└── " if is_last else "├── "
-            v_lines = vinculo.to_tree(child_prefix)
+            v_lines = vinculo.to_tree(child_prefix, show_attr)
             lines.append(prefix + connector + v_lines[0])
             lines.extend(v_lines[1:])
         return lines
 
+
 class Vinculo(ASTNode):
     def __init__(self, nome, valor):
+        super().__init__()
         self.nome = nome
         self.valor = valor
 
-    def to_tree(self, prefix=""):
+    def to_tree(self, prefix="", show_attr=False):
         lines = ["Vinculo"]
+        lines.extend(self._format_attrs(prefix, show_attr))
         # nome
         lines.append(prefix + "├── " + f"nome: {self.nome}")
         # valor
-        v_lines = self.valor.to_tree(prefix + "    ")
-        # a primeira linha do valor é o nome do valor (ex: "Numero: 5.0")
+        v_lines = self.valor.to_tree(prefix + "    ", show_attr)
         lines.append(prefix + "└── " + v_lines[0])
         lines.extend(v_lines[1:])
         return lines
 
+
 class DeclaracaoVariavel(ASTNode):
     def __init__(self, nome, inicializador):
+        super().__init__()
         self.nome = nome
         self.inicializador = inicializador
 
-    def to_tree(self, prefix=""):
+    def to_tree(self, prefix="", show_attr=False):
         lines = ["DeclaracaoVariavel"]
+        lines.extend(self._format_attrs(prefix, show_attr))
         lines.append(prefix + "├── " + f"nome: {self.nome}")
-        init_lines = self.inicializador.to_tree(prefix + "    ")
+        init_lines = self.inicializador.to_tree(prefix + "    ", show_attr)
         lines.append(prefix + "└── " + init_lines[0])
         lines.extend(init_lines[1:])
         return lines
 
+
 class Falar(ASTNode):
     def __init__(self, string_node, args):
+        super().__init__()
         self.string_node = string_node
         self.args = args
 
-    def to_tree(self, prefix=""):
+    def to_tree(self, prefix="", show_attr=False):
         lines = ["Falar"]
+        lines.extend(self._format_attrs(prefix, show_attr))
         # string
-        s_lines = self.string_node.to_tree(prefix + "    ")
+        s_lines = self.string_node.to_tree(prefix + "    ", show_attr)
         lines.append(prefix + "├── " + s_lines[0])
         lines.extend(s_lines[1:])
         # argumentos
@@ -88,18 +121,20 @@ class Falar(ASTNode):
             is_last = (i == len(self.args) - 1)
             child_prefix = prefix + ("    " if is_last else "│   ")
             connector = "└── " if is_last else "├── "
-            arg_lines = arg.to_tree(child_prefix)
+            arg_lines = arg.to_tree(child_prefix, show_attr)
             lines.append(prefix + connector + arg_lines[0])
             lines.extend(arg_lines[1:])
         return lines
 
+
 class OperacaoBinaria(ASTNode):
     def __init__(self, esquerda, operador, direita):
+        super().__init__()
         self.esquerda = esquerda
         self.operador = operador
         self.direita = direita
 
-    def to_tree(self, prefix=""):
+    def to_tree(self, prefix="", show_attr=False):
         op_map = {
             'TokenPlus': 'Soma',
             'TokenMinus': 'Subtracao',
@@ -108,36 +143,49 @@ class OperacaoBinaria(ASTNode):
         }
         op_nome = op_map.get(self.operador, self.operador)
         lines = [op_nome]
+        lines.extend(self._format_attrs(prefix, show_attr))
         # esquerda
-        esq_lines = self.esquerda.to_tree(prefix + "│   ")
+        esq_lines = self.esquerda.to_tree(prefix + "│   ", show_attr)
         lines.append(prefix + "├── " + esq_lines[0])
         lines.extend(esq_lines[1:])
         # direita
-        dir_lines = self.direita.to_tree(prefix + "    ")
+        dir_lines = self.direita.to_tree(prefix + "    ", show_attr)
         lines.append(prefix + "└── " + dir_lines[0])
         lines.extend(dir_lines[1:])
         return lines
 
+
 class Numero(ASTNode):
     def __init__(self, valor):
+        super().__init__()
         self.valor = valor
 
-    def to_tree(self, prefix=""):
-        return [f"Numero: {self.valor}"]
+    def to_tree(self, prefix="", show_attr=False):
+        lines = [f"Numero: {self.valor}"]
+        lines.extend(self._format_attrs(prefix, show_attr))
+        return lines
+
 
 class Identificador(ASTNode):
     def __init__(self, nome):
+        super().__init__()
         self.nome = nome
 
-    def to_tree(self, prefix=""):
-        return [f"Identificador: {self.nome}"]
+    def to_tree(self, prefix="", show_attr=False):
+        lines = [f"Identificador: {self.nome}"]
+        lines.extend(self._format_attrs(prefix, show_attr))
+        return lines
+
 
 class StringNode(ASTNode):
     def __init__(self, valor):
+        super().__init__()
         self.valor = valor
 
-    def to_tree(self, prefix=""):
-        return [f'String: "{self.valor}"']
+    def to_tree(self, prefix="", show_attr=False):
+        lines = [f'String: "{self.valor}"']
+        lines.extend(self._format_attrs(prefix, show_attr))
+        return lines
 
 
 # ==================== PARSER ====================
@@ -298,6 +346,8 @@ def main():
     )
     parser.add_argument('arquivo', help="Arquivo de entrada (.tkn)")
     parser.add_argument('--o', dest='saida', help="Salva a AST em um arquivo de texto.")
+    parser.add_argument('--show-attr', action='store_true',
+                        help="Exibe atributos extras armazenados nos nós da AST.")
     args = parser.parse_args()
 
     tokens = ler_tokens_do_arquivo(args.arquivo)
@@ -310,7 +360,7 @@ def main():
         sys.exit(1)
 
     # Gera a árvore como lista de linhas
-    linhas_arvore = ast.to_tree()  # prefixo vazio
+    linhas_arvore = ast.to_tree(show_attr=args.show_attr)
     arvore_str = "\n".join(linhas_arvore)
 
     if args.saida:
@@ -323,6 +373,7 @@ def main():
             sys.exit(1)
     else:
         print(arvore_str)
+
 
 if __name__ == "__main__":
     main()

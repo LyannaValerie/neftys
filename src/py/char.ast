@@ -1,0 +1,18 @@
+Programa
+├── DeclaracaoConstantes
+│   ├── Vinculo
+│   │   ├── nome: min
+│   │   └── Numero: 5.0
+│   └── Vinculo
+│       ├── nome: max
+│       └── Numero: 18.0
+├── DeclaracaoVariavel
+│   ├── nome: a
+│   └── Divisao
+│       ├── Soma
+│       │   ├── Identificador: min
+│       │   └── Identificador: max
+│       └── Numero: 2.0
+└── Falar
+    ├── String: "O ponto médio é: "
+    └── Identificador: a
