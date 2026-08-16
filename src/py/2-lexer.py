@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 import sys
 import re
+import argparse
+import ast
 
 # Mapeamento dos nomes dos grupos para os tokens desejados
 TOKEN_MAP = {
@@ -22,7 +24,6 @@ TOKEN_MAP = {
     'DIV': 'TokenDiv',          # /
     'LT': 'TokenLT',            # <
     'GT': 'TokenGT',            # >
-    # Adicione outros operadores conforme necessário
 }
 
 # Especificação dos padrões regex com nomes de grupos
@@ -49,9 +50,42 @@ token_specs = [
     ('GT', r'>'),                                 # maior que
 ]
 
-# Constroi o padrão regex combinado com grupos nomeados
 regex_pattern = '|'.join(f'(?P<{name}>{pattern})' for name, pattern in token_specs)
 regex = re.compile(regex_pattern)
+
+def ler_arquivo(nome_arquivo):
+    """
+    Lê o arquivo e retorna o código como string.
+    Se o arquivo terminar com .o, interpreta como uma lista de caracteres.
+    Caso contrário, lê como texto puro.
+    """
+    try:
+        with open(nome_arquivo, 'r', encoding='utf-8') as f:
+            conteudo = f.read()
+    except FileNotFoundError:
+        print(f"Erro: Arquivo '{nome_arquivo}' não encontrado.")
+        sys.exit(1)
+    except Exception as e:
+        print(f"Erro ao ler arquivo: {e}")
+        sys.exit(1)
+
+    # Se terminar com .o, tenta interpretar como lista de caracteres
+    if nome_arquivo.endswith('.o'):
+        try:
+            # Avalia o conteúdo como uma lista Python
+            lista_caracteres = ast.literal_eval(conteudo)
+            if not isinstance(lista_caracteres, list):
+                raise ValueError("O conteúdo não é uma lista.")
+            # Converte para string
+            codigo = ''.join(lista_caracteres)
+            print(f"Arquivo '{nome_arquivo}' interpretado como lista de caracteres.")
+            return codigo
+        except Exception as e:
+            print(f"Erro ao interpretar arquivo .o como lista de caracteres: {e}")
+            sys.exit(1)
+    else:
+        # Arquivo normal: retorna o conteúdo cru
+        return conteudo
 
 def tokenize(code):
     """
@@ -59,43 +93,12 @@ def tokenize(code):
     Cada token é uma tupla (tipo, valor, linha, coluna).
     """
     tokens = []
-    line_num = 1
-    line_start = 0  # posição do início da linha atual no código
-
-    for match in regex.finditer(code):
-        kind = match.lastgroup
-        value = match.group()
-        start = match.start()
-        end = match.end()
-
-        # Atualiza número da linha e coluna
-        # Conta quantas quebras de linha ocorreram desde o último token
-        # Para simplificar, calculamos a linha baseando-se na posição
-        # (melhor usar um contador separado, mas vamos recalcular)
-        # Vamos usar um método mais simples: contar quebras até a posição
-        # Mas para eficiência, podemos manter um índice de linha incremental.
-        # Vou recalcular a linha e coluna a partir do início do arquivo.
-        # Isso é mais lento, mas para fins didáticos serve.
-        # Melhor: atualizar linha/coluna ao encontrar \n.
-        pass
-
-    # Vamos refazer de uma forma mais robusta: percorrer caractere por caractere para controle de linha.
-    # Mas o regex é mais simples. Vou usar uma abordagem mista: usar regex para tokens e manter posição.
-    # Vou reimplementar com um loop manual para controle preciso de linha/coluna.
-
-    # Na verdade, vou usar a abordagem com regex e calcular linha/coluna a partir da posição.
-    # Para cada match, calculamos a linha contando as quebras de linha antes do match.
-    # Isso é feito com code[:start].count('\n') + 1
-    # E a coluna = start - code.rfind('\n', 0, start) (ou start + 1 se não houver quebra)
-    # Vamos fazer isso.
-
-    # Reiniciar a iteração porque precisamos da posição.
     for match in regex.finditer(code):
         kind = match.lastgroup
         value = match.group()
         start = match.start()
 
-        # Se for comentário ou espaço, ignoramos
+        # Ignora comentários e espaços
         if kind in ('COMMENT', 'WHITESPACE'):
             continue
 
@@ -105,40 +108,53 @@ def tokenize(code):
         col = start - last_newline if last_newline != -1 else start + 1
 
         # Mapeia o tipo para o nome do token
-        token_type = TOKEN_MAP.get(kind, kind)  # se não mapeado, usa o nome do grupo
+        token_type = TOKEN_MAP.get(kind, kind)
         tokens.append((token_type, value, line_num, col))
 
     return tokens
 
+def formatar_tokens(tokens):
+    """
+    Formata a lista de tokens para saída (apenas tipos e valores).
+    """
+    linhas = []
+    for ttype, value, _, _ in tokens:
+        linhas.append(f"{ttype}: '{value}'")
+    return "\n".join(linhas)
+
 def main():
-    if len(sys.argv) != 2:
-        print("Uso: python3 lexer.py <arquivo.nfs>")
-        sys.exit(1)
+    parser = argparse.ArgumentParser(
+        description="Lexer para a linguagem Nefthys. Suporta arquivos .nfs (código) ou .o (lista de caracteres)."
+    )
+    parser.add_argument('arquivo', help="Arquivo de entrada (.nfs ou .o)")
+    parser.add_argument('--o', dest='saida', help="Arquivo de saída para tokens (ex: char.tkn).")
+    parser.add_argument('--detalhado', action='store_true',
+                        help="Exibe tokens completos (tipo, valor, linha, coluna).")
+    args = parser.parse_args()
 
-    filename = sys.argv[1]
-
-    try:
-        with open(filename, 'r', encoding='utf-8') as f:
-            code = f.read()
-    except FileNotFoundError:
-        print(f"Erro: Arquivo '{filename}' não encontrado.")
-        sys.exit(1)
-    except Exception as e:
-        print(f"Erro ao ler arquivo: {e}")
-        sys.exit(1)
+    # Lê o arquivo (detecta .o automaticamente)
+    codigo = ler_arquivo(args.arquivo)
 
     # Tokeniza
-    tokens = tokenize(code)
+    tokens = tokenize(codigo)
 
-    # Exibe os tokens formatados
-    print("Lista de tokens (tipo, valor, linha, coluna):")
-    for token in tokens:
-        print(f"{token}")
+    # Prepara saída
+    if args.detalhado:
+        saida = "\n".join(str(t) for t in tokens)
+    else:
+        saida = formatar_tokens(tokens)
 
-    # Opcional: exibe apenas os tipos e valores
-    print("\nApenas tipos e valores:")
-    for ttype, value, _, _ in tokens:
-        print(f"{ttype}: '{value}'")
+    # Salva ou imprime
+    if args.saida:
+        try:
+            with open(args.saida, 'w', encoding='utf-8') as f:
+                f.write(saida)
+            print(f"Tokens salvos em '{args.saida}'")
+        except Exception as e:
+            print(f"Erro ao escrever arquivo de saída: {e}")
+            sys.exit(1)
+    else:
+        print(saida)
 
 if __name__ == "__main__":
     main()
