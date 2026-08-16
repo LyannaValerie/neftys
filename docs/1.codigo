@@ -1,0 +1,19 @@
+O código fonte é o texto plano digitado no editor de código, caractere por caractere: espaços em branco, quebras de linha e tabulações.
+
+Não possui nenhum significado para a máquina, sendo apenas um punhado de bytes torrando armazenamento.
+
+O compilador não sabe "x" é uma variável, e etc.
+
+
+Para efeito prático, vamos considerar um possível arquivo com a seguinte instrução em neftys:
+
+#  ponto_medio.nfs
+cons: min, max = 5, 18
+var: a = (min + max) / 2
+
+falar: "O ponto médio é: ", a
+
+Que, para o computador, nada mais é que:
+
+['c', 'o', 'n', 's', ':', ' ', 'm', 'i', 'n', ',', ' ', 'm', 'a', 'x', ' ', '=', ' ', '5', ',', ' ', '1', '8', '\n', 'v', 'a', 'r', ':', ' ', 'a', ' ', '=', ' ', '(', 'm', 'i', 'n', ' ', '+', ' ', 'm', 'a', 'x', ')', ' ', '/', ' ', '2', '\n', '\n', 'f', 'a', 'l', 'a', 'r', ':', ' ', '"', 'O', ' ', 'p', 'o', 'n', 't', 'o', ' ', 'm', 'é', 'd', 'i', 'o', ' ', 'é', ':', ' ', '"', ',', ' ', 'a', '\n']
+

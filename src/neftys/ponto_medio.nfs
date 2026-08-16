@@ -1,0 +1,4 @@
+cons: min, max = 5, 18
+var: a = (min + max) / 2
+
+falar: "O ponto médio é: ", a
