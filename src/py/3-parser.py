@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import sys
 import argparse
+import ast
 
 # ==================== AST NODES ====================
 
@@ -112,9 +113,11 @@ class Falar(ASTNode):
     def to_tree(self, prefix="", show_attr=False):
         lines = ["Falar"]
         lines.extend(self._format_attrs(prefix, show_attr))
-        # string
-        s_lines = self.string_node.to_tree(prefix + "    ", show_attr)
-        lines.append(prefix + "├── " + s_lines[0])
+        # string: é o último filho quando `falar` não possui argumentos.
+        string_connector = "├── " if self.args else "└── "
+        string_prefix = prefix + ("│   " if self.args else "    ")
+        s_lines = self.string_node.to_tree(string_prefix, show_attr)
+        lines.append(prefix + string_connector + s_lines[0])
         lines.extend(s_lines[1:])
         # argumentos
         for i, arg in enumerate(self.args):
@@ -189,6 +192,12 @@ class StringNode(ASTNode):
 
 
 # ==================== PARSER ====================
+# Pontos naturais de expansão futura:
+# - novas declarações: parse_statement();
+# - novas precedências: camadas entre parse_expr/parse_term/parse_factor;
+# - novos primários/literais: parse_factor();
+# - blocos/escopos: novo nó + rotina de parsing específica.
+
 
 class Parser:
     def __init__(self, tokens):
@@ -323,11 +332,24 @@ def ler_tokens_do_arquivo(nome_arquivo):
                     continue
                 if ':' not in linha:
                     continue
-                tipo, valor = linha.split(':', 1)
+                tipo, valor_serializado = linha.split(':', 1)
                 tipo = tipo.strip()
-                valor = valor.strip()
-                if valor.startswith("'") and valor.endswith("'"):
-                    valor = valor[1:-1]
+                valor_serializado = valor_serializado.strip()
+
+                # O lexer serializa lexemas com repr(). literal_eval() refaz
+                # corretamente aspas, barras e escapes. Mantemos um fallback
+                # para artefatos .tkn antigos.
+                try:
+                    valor = ast.literal_eval(valor_serializado)
+                except (SyntaxError, ValueError):
+                    valor = valor_serializado
+                    if (
+                        len(valor) >= 2
+                        and valor[0] == valor[-1]
+                        and valor[0] in ("'", '"')
+                    ):
+                        valor = valor[1:-1]
+
                 tokens.append((tipo, valor))
     except FileNotFoundError:
         print(f"Erro: Arquivo '{nome_arquivo}' não encontrado.")

@@ -15,6 +15,11 @@ def converter_arquivo_para_lista(nome_arquivo):
         print(f"Erro ao ler o arquivo: {e}")
         return None
 
+# ==================== FORMATO INTERMEDIÁRIO (.char) ====================
+# Contrato atual: lista Python literal de caracteres.
+# Futuro: novos formatos de visualização podem ser adicionados aqui sem
+# alterar a etapa conceitual código-fonte -> fluxo de caracteres.
+
 def formatar_lista(lista_caracteres):
     """
     Formata a lista de caracteres como uma representação Python (string).
@@ -26,7 +31,7 @@ def main():
         description="Converte um arquivo para uma lista de caracteres (como ['c', 'o', 'n', ...])."
     )
     parser.add_argument('arquivo', help="Arquivo de entrada (ex: ponto_medio.nfs)")
-    parser.add_argument('--o', dest='saida', help="Arquivo de saída (ex: char.o). Se omitido, imprime na tela.")
+    parser.add_argument('--o', dest='saida', help="Arquivo de saída (ex: programa.char). Se omitido, imprime na tela.")
     parser.add_argument('--estatisticas', action='store_true', help="Exibe estatísticas (total, espaços, etc.)")
     
     args = parser.parse_args()

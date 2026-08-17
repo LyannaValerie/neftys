@@ -1,10 +1,10 @@
 1.
 
-O código fonte é o texto plano digitado no editor de código, caractere por caractere: espaços em branco, quebras de linha e tabulações.
+O código fonte é o texto plano digitado no editor de código, caractere por caractere isso inclui espaços em branco, quebras de linha e tabulações.
 
 Não possui nenhum significado para a máquina, sendo apenas um punhado de bytes torrando armazenamento.
 
-O compilador não sabe "x" é uma variável, e etc.
+O compilador não sabe "x" é uma variável, e etc. Não ainda...
 
 
 Para efeito prático, vamos considerar um possível arquivo com a seguinte instrução em neftys:
