@@ -1,0 +1,20 @@
+1. Tempo de execução (runtime)
+
+Aqui, o código do usuário já precisa estar em um formato executável pela máquina.
+Falta, então, executá-lo - óbvio.
+
+Se o compilamos para linguagem de máquina, basta pedir ao sistema operacional carregar o arquivo e ele sai rodando.
+Se o compilamos para bytecode, teremos a burocracia de iniciar a VM e carregar o programa nela.
+
+Em ambos os casos, para todas as linguagens, exceto as mais básicas e de mais baixo nível, geralmente precisaremos de alguns serviços fornecidos pela nossa linguagem enquanto
+o programa está em execução.
+
+Se a linguagem gerencia memória automaticamente, precisaremos de um garbage collector (coletor de lixo) para recuperar os bits não utilizados.
+Se a linguagem suporta testes do tipo "instance of" para vermos que tipo de objeto tem, então precisamos de alguma representação para rastrear o tipo de cada objeto durante a
+execução.
+
+Tudo isso acontece durante a execução, ou em tempo de execução, apropriadamente chamado de runtime. 
+
+Em uma linguagem compilada, o codigo que implementa o runtime é inserido diretamente no executável resultante. Go, por exemplo, cada aplicação compilada tem sua própria cópia
+do runtime de Go diretamente embutida nela.
+Em uma linguagem executada dentro de um interpretador ou VM, então o runtime vive lá. É assim que funcionam a maioria das implementações de linguagens como Java, Python e JS.
