@@ -6,8 +6,7 @@ O que descreve formalmente essas estruturas, é a gramática.
 Logo, o parser, seria o algoritmo que reconhece as estruturas permitidas da linguagem.
 A gramática entrará em outro momento.
 
-No entanto, essa estrutura permitida precisa ser representada, o que é feito através da AST - Abstract Syntax Tre, ou Árvore Sintática Abstrata, para os íntimos.
-
+No entanto, essa estrutura permitida precisa ser representada, o que é feito através da AST - Abstract Syntax Tree -, ou Árvore Sintática Abstrata, para os íntimos.
 
 Tomemos nosso código exemplo (ponto_medio.nfs):
 cons: min, max = 5, 18

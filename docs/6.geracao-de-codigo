@@ -1,0 +1,37 @@
+1.
+
+Após aplicarmos todas as otimizações possíveis ao código do usuário, o último estágio é convertê-lo de uma forma que a máquina realmente possa executar.
+
+Aqui é onde entra o "code gen", ou, geração de código e isto precisa ser explicado.
+
+Para começar, code gen é um ato (final) de tradução.
+
+Quando usamos código ao nos referirmos sobre "code gen" estamos, na verdade, falando a respeito daquelas instruções primitivas que o processador compreende, que são similares
+ao assembly - e, para a infelicidade do humano, não lhe é agradável de ler.
+
+Aqui, estamos no back-end.
+
+Desse ponto em diante, o código que antes era legível para humanos torna-se cada vez mais "primitivo", isto é, da forma simples que a máquina consegue entender.
+
+Aqui fica visível como diferentes linguagens podem trabalhar nas mais diversas arquiteturas: sempre vai existir o front-end, na qual o humano trabalha, e o back-end, na qual
+o código fonte gerado pelo humano vai "perdendo os significados iniciais" até chegar na forma compreensível pela máquina.
+
+E, então, aparece a decisão: temos que gerar instruções para uma CPU real ou uma virtual? Se for para um real, geramos um executável que o SO pode carregar diretamente no chip.
+O código nativo é extremamente rápido, porém, gerá-lo, dá muito trabalho. As arquiteturas atuais têm pilhas de instruções, pipelines complexos (você não achou que todas eram
+facílimas como a nossa, não é?) e muita bagagem histórica.
+
+Falar da forma que o chip entende significa estar preso a uma arquitetura específica: se o compilador gera código de máquina para x86 esse mesmo código não rodará em um ARM.
+
+Para evitar toda a algazarra que seria ter que criar N compiladores para as M arquiteturas, pensaram nas máquinas virtuais que evitam o trabalho mencionado na linha acima.
+
+A máquina virtual, então, seria algo hipotético e idealizado e, naquele tempo, o código gerado para elas foi chamado de "p-code" (de "portable code"), mas, hoje, chamam de
+"bytecode", pois cada instrução tem frequentemente um único byte de comprimento.
+
+Essas instruções sintéticas são projetadas para mapear de perto a semântica da linguagem, evitando estar amarradas às peculiaridades de qualquer arquitetura e seu acúmulo
+histórico.
+
+Pense nisso como uma codificação binária densa das operações de baixo nível da linguagem.
+
+Uma adição: o tipo de VMs que estamos falando aqui são chamadas de language virtual machines (LVM) ou process virtual machines (PVM) - esse último carregando toda a precisão
+terminológica necessária. Isso evita de você, por exemplo, confundir isso tudo com aquelas ISOs que roda em seu VirtualBox. Bom, na verdade, tem algo a ver, mas, não no nível
+que falaremos aqui. E aliás, isso é papo para outra área: Arquitetura de Computadores, o que não abordaremos aqui.

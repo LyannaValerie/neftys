@@ -1,0 +1,19 @@
+1. Máquina Virtual, Virtual Machine ou VM
+
+Como havíamos dito em algum lugar antes: o compilador produz bytecode, que é o código traduzido para uma VM alvo, ao invés de uma arquitetura alvo, evitando uma bagunça total
+ao ter de refazer todo o trajeto em outra arquitetura.
+
+Mas, o trabalho não acaba no bytecode, claro. A vida não é um doce!
+
+Os chips não falam em bytecode. Então, é preciso fazê-los entender.
+
+Aqui existem duas opções para que isso ocorra: 1. escrever um mini-compilador para cada arquitetura-alvo que converta o bytecode em código nativo para aquela máquina, tendo que
+trabalhar em cada chip que suportar, mas, isso é bastante simples e dá até para reutilizar o resto do pipeline do compilador em todas as máquinas que suportar, ou seja, você
+estará utilizando o (seu) bytecode como uma IR.
+(Esse passo aqui é basicamente "criar um compilador para a saída bytecode do compilador" que, curiosamente, era justamente o que buscávamos evitar)
+
+2. Ou, você pode ter uma máquina virtual, um programa que emula um chip hipotético suportando sua arquitetura virtual em tempo de execução (runtime). Claro, executa bytecode
+em uma VM é muito mais lento que traduzi-lo para código nativo antecipadamente (ahead of time), porque toda instrução precisa ser simulada em tempo de execução toda vez que for
+executada. Em troca, ganha-se simplicidade e portabilidade, digamos, você implementa sua VM em C e poderá rodar sua linguagem em qualquer arquitetura com um compilador com
+suporte a C.
+

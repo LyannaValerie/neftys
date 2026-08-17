@@ -1,0 +1,4 @@
+cons: n1 = 1
+ltl: n2 = "Dois"
+
+falar: "Concatenação não existe, logo, inteiro + string deve retornar erro: ", n1+n2

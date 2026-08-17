@@ -1,0 +1,30 @@
+1. Representação Intermediária (IR)
+
+O compilador pode ser pensado como o "organizador" dos dados de trabalhos anteriores que representam o código do usuário de uma forma a tornar a próxima etapa mais simples
+de ser implementada. O processo de dividir o trabalho em várias etapas dependentes umas das outras se chama, no jargão de TI, "pipeline", ou linha de produção. Aqui, usaremos
+o termo pipeline, no inglês.
+
+Em suma, o compilador é um grande tradutor universal.
+
+Pense como um tradutor que sabe grego, alemão e japonês: se ele precisar traduzir algo do grego para alemão, basta ele utilizar de ideias abstratas e conceitos universais que
+já sabe em grego para, então, valendo-se de seu conhecimento de alemão, fazer a correspondente associação no alemão, resultando em uma tradução - o mesmo se aplica ao japonês.
+
+
+O front-end do pipeline:
+É a metade do compilador que entende o programador, englobando o scanner, lexer, parser e analisador semântico, só se importando com as regras da linguagem que você escolheu
+e, com isso, temos um grande spoiler: a gramática, as regras estruturais da linguagem, já está estabelecida - ou, ao menos, deveriam estar.
+É do objetivo do front-end ler o texto - código fonte -, garantir que ele obedece as regras de sintaxe e transformá-lo na AST correspondente - ou, em outra representação
+intermediária abstrata.
+Linguagens diferentes possuem "fronts" diferentes e, consequentemente, não se compreendem mutuamente - C, C++ e C# tem em comum uma letra, mas, na prática, são todas diferentes.
+
+O back-end do pipeline:
+Essa é a metade do compilador que entende a máquina e ignora completamente como o código foi originalmente escrito, recebendo a AST gerada no front-end e se preocupa em
+transformá-lo em instruções reais ao processador.
+O back-end é específico da arquitetura de hardware onde o programa vai rodar, como nos processadores (Intel/AMD), chips Apple/Android ou em uma VM, como a da JVM.
+O back-end precisa saber detalhes físicos da máquina, tais como: quantos registradores de memória possui o chip, como ele lida com cálculos matemáticos e qual o "dialeto"
+binário dele.
+
+Sem esses detalhes os programadores teriam de desenvolver um compilador novo do zero para toda combinação de linguagem e chip.
+
+Na estrutura de pipeline, porém, basta escrever um front-end para ela que gere uma AST, tornando o código executável qualquer lugar por aí ao reaproveitar um back-end
+existente no mercado.

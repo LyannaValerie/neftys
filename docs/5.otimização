@@ -1,0 +1,19 @@
+1. 
+
+Esse será um assunto pulado neste conteúdo e terá apenas uma menção honrosa aqui.
+
+Otimização é, basicamente, fazer a mesma coisa mas em um tempo menor.
+
+Um exemplo é a "constant folding" (dobra de constantes) onde uma expressão pode sempre avaliar para o mesmo valor, então, basta fazer essa avaliação em tempo de compilação
+(compile time), substituindo o código da expressão pelo seu resultado. O usuário pode digitar: 
+
+pennyArea = 3.14159 * (0.75 / 2) * (0.75 / 2);
+
+Podemos repetir tudo isso no compilador e alterar o código para:
+
+pennyArea = 0.4417860938;
+
+Otimização é uma área enorme do negócio de linguagens de programação e, caso queira revirar esse tipo de coisa, pesquise por:
+"constant propagation" (propagação de constantes), "common subexpression elimination" (eliminação de subexpressões comuns), "loop invariant code motion" (movimentação de código invariante de loop), "global value numbering" (numeração global de valores), "strength reduction" (redução de força), "scalar replacement of aggregates" (substituição escalar de agregados), "dead code elimination" (eliminação de código morto) e "loop unrolling" (desenrolamento de loops).
+
+Há, no entanto, uma tensão. Muitas otimizações, como register allocation (alocação de registradores) e instruction selection (seleção de instruções), funcionam melhor quando conhecem os pontos fortes e as capacidades de um chip específico. Descobrir quais partes do seu compilador podem ser compartilhadas e quais devem ser específicas ao alvo é uma arte.
