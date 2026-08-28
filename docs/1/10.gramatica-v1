@@ -1,0 +1,244 @@
+10. Gramática Neftys v1 — contrato experimental
+
+Este documento descreve a gramática atual em evolução e separa decisão de linguagem de comportamento experimental.
+
+## Estado
+
+**Documentado como decisão da linguagem:** sintaxe e regras semânticas descritas abaixo.
+
+**Confirmado no experimento Python:** tokenização estrutural, parsing e análise semântica cobertos por `src/py/10-gramatica.py`, `src/py/neftys_v1/` e `tests/test_grammar_v1.py`.
+
+**Ainda não implementado em Pinker:** toda a implementação de referência.
+
+**Ainda não confirmado como runtime completo:** execução de funções/classes/closures, curto-circuito efetivo, GC e relógio monotônico real.
+
+## Tipos de dados
+
+- `Inteiro`: inteiro da linguagem; o tamanho definitivo pertence à implementação de referência.
+- `Real`: ponto flutuante de precisão dupla, IEEE-754 binary64.
+- `String`: cadeia delimitada por aspas duplas.
+- `Booleano`: `Ver` e `Fal`.
+- `SV`: sem valor.
+- valores de função, classe e instância surgem com as construções correspondentes.
+
+A Neftys é dinamicamente tipada, mas vínculos mutáveis possuem **tipo estável**: o primeiro valor diferente de `SV` fixa o tipo aceito em reatribuições futuras.
+
+Exemplo:
+
+    x = SV
+    x = 10
+    x = SV
+    x = 20      # válido
+    x = 20.5    # erro: Inteiro -> Real
+
+`SV` não fixa nem altera o tipo estável.
+
+## Nomes, variáveis e constantes
+
+Não existem palavras `var`, `let` ou `const`.
+
+- identificador em caixa alta: constante;
+- identificador em caixa baixa: variável;
+- constante não pode ser reatribuída no mesmo escopo;
+- constante externa pode ser sombreada em bloco interno;
+- variável visível já existente é reatribuída pelo vínculo mais próximo;
+- variável inexistente é criada no escopo atual.
+
+Um literal numérico não é identificador. Para um nome numeral usa-se escape:
+
+    `1` = 2
+    fale `1` == 2    # compara a variável escapada
+    fale 1 == 2      # compara literais: Fal
+
+## Constantes e funções padrão
+
+`PI`, `TAU`, `PHI` e `EULER` são vínculos imutáveis do ambiente padrão, não palavras reservadas.
+
+`PI` é `Real`; portanto possui a precisão de binary64. A Neftys não promete cem casas semanticamente válidas num `double`.
+
+`relog()` é uma função padrão destinada a benchmarks e retorna segundos como `Real`. A implementação de referência deverá usar uma fonte monotônica de tempo.
+
+## Operadores
+
+Aritméticos:
+
+    +  -  *  /
+
+`-` também é unário para números. `+` unário não existe.
+
+Concatenação:
+
+    "Nef" + "tys"
+
+`+` com uma única string ou com String e outro tipo é erro. A mensagem-base definida é:
+
+    A expressão '+' deve ser usada entre duas strings: CONCATENATION FAILED!
+
+Comparação e igualdade:
+
+    <  >  <=  >=  ==  !=  diff
+
+`diff` e `!=` possuem a mesma semântica. `<<` e `>>` não são comparadores e ficam reservados para possível deslocamento de bits futuro.
+
+Lógica:
+
+    !
+    e
+    ou
+
+`!`, `e` e `ou` exigem booleanos. `e` e `ou` deverão possuir curto-circuito no runtime de referência.
+
+## Precedência
+
+Da menor para a maior:
+
+    ou
+    e
+    == != diff
+    < > <= >=
+    + -
+    * /
+    ! -unário
+    chamada() e acesso.campo
+    (...)
+
+`=` é atribuição em nível de instrução, não expressão de valor. Atribuições encadeadas como `a = b = 1` não fazem parte desta versão.
+
+## Blocos por indentação
+
+Não existem `{}`, `}` nem `;`.
+
+Um bloco começa quando uma construção que exige corpo é seguida por uma linha com indentação maior. O bloco termina antes da primeira linha não vazia que volta a um nível anterior. EOF fecha os blocos abertos estruturalmente.
+
+O lexer experimental materializa a estrutura como `NEWLINE`, `INDENT` e `DEDENT`.
+
+Tabs são rejeitados nesta versão. Espaços são usados para indentação; quatro espaços são a convenção recomendada.
+
+Linhas vazias e comentários não alteram a pilha de indentação. Dentro de parênteses, quebras de linha podem ser tratadas como continuação.
+
+## Instruções
+
+Impressão:
+
+    fale "texto", valor
+
+Condicional:
+
+    se condição então
+        instruções
+    senão se outra então
+        instruções
+    senão
+        instruções
+
+Laços:
+
+    enquanto condição faça
+        instruções
+
+    para item em coleção faça
+        instruções
+
+`pare` e `continue` só são válidos dentro de laços.
+
+## Funções
+
+    fun soma(a, b)
+        retorne a + b
+
+Chamada:
+
+    soma(1, 2)
+
+Funções são valores de primeira classe e podem existir em escopos locais. Funções que terminam sem `retorne` produzem `SV`. `retorne` sem expressão equivale a retornar `SV`.
+
+Closures pertencem ao contrato futuro do runtime; o experimento atual reconhece a estrutura, mas não executa closures.
+
+## Classes
+
+    class Pessoa
+        fun inic(nome)
+            esse.nome = nome
+
+        fun apresentar()
+            fale esse.nome
+
+Chamar uma classe cria uma instância e encaminha os argumentos para `inic`.
+
+Campos são criados por atribuição. O runtime deverá estabilizar o tipo de um campo por instância seguindo a mesma ideia dos vínculos mutáveis.
+
+`esse` referencia a instância atual dentro de métodos.
+
+Herança única:
+
+    class Filha herda Base
+        fun inic(x)
+            sup.inic(x)
+
+`sup` só é válido em método de classe que possui superclasse.
+
+`inic` pode terminar sem retorno ou com `retorne` sem valor; ele não pode devolver um valor diferente de `SV`. A chamada da classe devolve a instância.
+
+## Memória
+
+A Neftys administrará memória automaticamente. Como objetos e closures podem formar ciclos, a direção recomendada é coleta de lixo por rastreamento, não mera contagem de referências.
+
+O momento exato da coleta não deve fazer parte da semântica observável do programa. Entretanto, a Neftys deverá poder **visualizar** raízes, objetos alcançáveis, objetos coletáveis e eventos de coleta como parte de sua proposta didática.
+
+## Gramática aproximada em EBNF
+
+    programa      ::= NOVALINHA* (instrucao NOVALINHA*)* EOF
+    bloco         ::= NOVALINHA INDENT instrucao (NOVALINHA+ instrucao)* NOVALINHA* DEDENT
+
+    instrucao     ::= atribuicao | fale | condicional | enquanto | para
+                    | funcao | classe | retorno | "pare" | "continue" | expressao
+
+    atribuicao    ::= alvo "=" expressao
+    alvo          ::= IDENTIFICADOR | posfixa "." IDENTIFICADOR
+    fale          ::= "fale" lista_expressoes?
+
+    condicional   ::= "se" expressao "então" bloco
+                      ("senão" "se" expressao "então" bloco)*
+                      ("senão" bloco)?
+
+    enquanto      ::= "enquanto" expressao "faça" bloco
+    para          ::= "para" IDENTIFICADOR "em" expressao "faça" bloco
+
+    funcao        ::= "fun" IDENTIFICADOR "(" parametros? ")" bloco
+    parametros    ::= IDENTIFICADOR ("," IDENTIFICADOR)*
+    retorno       ::= "retorne" expressao?
+
+    classe        ::= "class" IDENTIFICADOR ("herda" IDENTIFICADOR)? bloco
+
+    expressao     ::= ou
+    ou            ::= conjuncao ("ou" conjuncao)*
+    conjuncao     ::= igualdade ("e" igualdade)*
+    igualdade     ::= comparacao (("==" | "!=" | "diff") comparacao)*
+    comparacao    ::= adicao (("<" | ">" | "<=" | ">=") adicao)*
+    adicao        ::= multiplicacao (("+" | "-") multiplicacao)*
+    multiplicacao ::= unario (("*" | "/") unario)*
+    unario        ::= ("!" | "-") unario | posfixa
+    posfixa       ::= primaria ("(" argumentos? ")" | "." IDENTIFICADOR)*
+    argumentos    ::= expressao ("," expressao)*
+
+    primaria      ::= INTEIRO | REAL | STRING | "Ver" | "Fal" | "SV"
+                    | IDENTIFICADOR | "esse" | "sup" | "(" expressao ")"
+
+## Diagnósticos e personalidade
+
+A voz da Neftys é obscura, cínica e ranzinza. Isso não autoriza diagnósticos inúteis.
+
+Formato recomendado:
+
+    NFS-E330 [linha 2, coluna 1]
+    Não se reatribui um ponto flutuante a uma variável que recebeu um inteiro, seu doido!
+    2 | dois = 3.14
+      | ^
+    Como faz: mantenha o vínculo como inteiro ou use outro nome.
+
+Erros internos usam prefixo `NFS-I` e assumem responsabilidade, por exemplo:
+
+    NFS-I900
+    Tá. Essa fui eu. O experimento tropeçou sozinho.
+
+A personalidade nunca deve esconder causa, localização ou correção.
