@@ -1,50 +1,21 @@
-4. Análise estática e tabela de símbolos
+4. Análise estática, vínculos e tipos
 
-Depois que o parser produz uma AST, ainda não sabemos necessariamente a que declaração cada uso de nome se refere, em qual escopo ele vive ou qual tipo simples uma expressão possui.
+`4-symbol_table.py` recebe a AST e a enriquece com vínculos, escopos e tipos observáveis.
 
-O experimento em `src/py/4-symbol_table.py` existe para tornar essa etapa visível.
+Regras atuais:
 
-## Confirmado no experimento histórico
+- nome com letras em caixa alta cria constante no escopo atual;
+- nome comum cria variável ou reatribui a variável visível mais próxima;
+- constante não pode ser reatribuída no mesmo escopo, mas pode ser sombreada em bloco interno;
+- o primeiro valor diferente de `SV` fixa o tipo estável de uma variável;
+- `SV` pode aparecer antes ou depois do valor tipado sem mudar esse tipo estável;
+- `PI`, `TAU`, `PHI`, `EULER` e `relog` pertencem ao ambiente padrão;
+- `esse` só é válido em método; `sup` exige uma superclasse;
+- `retorne` exige função; `pare`/`continue` exigem laço;
+- `inic` não retorna valor próprio.
 
-A tabela de símbolos mantém uma pilha de escopos e consegue:
+Exemplo de diagnóstico:
 
-- registrar símbolos;
-- procurar o vínculo visível mais próximo;
-- distinguir o escopo global de escopos locais;
-- anotar a AST com tipo, categoria, escopo e vínculo;
-- diagnosticar identificadores usados antes de uma declaração visível;
-- inferir a categoria numérica histórica e strings;
-- verificar operações aritméticas simples;
-- aceitar `String + String` e rejeitar combinações incompatíveis.
+Não se reatribui um ponto flutuante a uma variável que recebeu um inteiro, seu doido!
 
-A representação histórica ainda usa `cons:`, `var:` e `falar:`. Ela pertence ao primeiro experimento e não deve ser confundida com a gramática atual da Neftys.
-
-## O que a gramática v1 muda
-
-A gramática atual abandona `cons:` e `var:`. A caixa do identificador passa a participar da semântica:
-
-- nomes em caixa alta representam constantes;
-- nomes em caixa baixa representam variáveis;
-- constantes não podem ser reatribuídas no mesmo escopo;
-- uma constante externa pode ser sombreada por outra constante em um bloco interno;
-- variáveis podem ser reatribuídas, mas estabilizam no tipo do primeiro valor diferente de `SV`;
-- `SV` não fixa nem altera o tipo estável do vínculo.
-
-Essas regras são exercitadas no experimento `src/py/neftys_v1/semantic.py` e não são retroativamente atribuídas ao `4-symbol_table.py` histórico.
-
-## Visualização desejada
-
-A etapa deve permitir observar, para cada nome:
-
-- nome;
-- categoria;
-- tipo ou tipo estabilizado;
-- mutabilidade;
-- escopo;
-- origem, como usuário ou ambiente padrão.
-
-Essa visibilidade é parte do objetivo da Neftys, não mero log de depuração.
-
-## Futuro em Pinker
-
-A análise semântica de referência será reimplementada em Pinker. O experimento Python serve para testar os contratos e a forma de visualizá-los antes dessa implementação.
+A etapa pode escrever `.sym` para a tabela e `.sem` para a AST anotada consumida pela IR.

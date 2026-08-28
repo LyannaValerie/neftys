@@ -1,244 +1,178 @@
 10. Gramática Neftys v1 — contrato experimental
 
-Este documento descreve a gramática atual em evolução e separa decisão de linguagem de comportamento experimental.
+Este documento descreve decisões atuais da linguagem. A mesma gramática é exercitada pelo pipeline `src/py/1-*` a `9-*`; `10-gramatica.py` existe apenas como inspetor agregado.
 
 ## Estado
 
-**Documentado como decisão da linguagem:** sintaxe e regras semânticas descritas abaixo.
+Confirmado no experimento Python:
+- indentação com NEWLINE/INDENT/DEDENT;
+- Inteiro, Real binary64, String, Booleano e SV;
+- caixa alta como constante e caixa baixa como variável;
+- tipo estável do vínculo após o primeiro valor diferente de SV;
+- aritmética, concatenação, comparação, igualdade e lógica;
+- `fale`, `se`, `senão`, `enquanto`, `para`, funções, closures, classes, campos, herança, `esse`, `sup`, `inic`, `retorne`, `pare` e `continue`;
+- IR estrutural, otimização demonstrativa, bytecode, VM e runtime experimentais;
+- `PI`, `TAU`, `PHI`, `EULER` e `relog()` no ambiente padrão.
 
-**Confirmado no experimento Python:** tokenização estrutural, parsing e análise semântica cobertos por `src/py/10-gramatica.py`, `src/py/neftys_v1/` e `tests/test_grammar_v1.py`.
+Ainda não implementado em Pinker:
+- toda a implementação de referência.
 
-**Ainda não implementado em Pinker:** toda a implementação de referência.
+Ainda não definido como contrato definitivo:
+- representação final de Inteiro;
+- coleções e quais valores serão iteráveis;
+- formato definitivo da IR e do bytecode;
+- estratégia concreta do coletor de lixo da implementação Pinker.
 
-**Ainda não confirmado como runtime completo:** execução de funções/classes/closures, curto-circuito efetivo, GC e relógio monotônico real.
+## Literais e tipos
 
-## Tipos de dados
+`Ver` e `Fal` são os literais booleanos. A saída textual padrão os apresenta como `Verdadeiro!` e `Falso!`.
 
-- `Inteiro`: inteiro da linguagem; o tamanho definitivo pertence à implementação de referência.
-- `Real`: ponto flutuante de precisão dupla, IEEE-754 binary64.
-- `String`: cadeia delimitada por aspas duplas.
-- `Booleano`: `Ver` e `Fal`.
-- `SV`: sem valor.
-- valores de função, classe e instância surgem com as construções correspondentes.
+Strings usam aspas duplas: `""`, `"texto"`, `"123"`.
 
-A Neftys é dinamicamente tipada, mas vínculos mutáveis possuem **tipo estável**: o primeiro valor diferente de `SV` fixa o tipo aceito em reatribuições futuras.
+`SV` representa sem valor. Ele não fixa nem altera o tipo estável de uma variável.
 
-Exemplo:
+Inteiro e Real são tipos distintos. Real é IEEE-754 binary64 no contrato atual. Uma variável que estabilizou como Inteiro não aceita Real e vice-versa.
 
-    x = SV
-    x = 10
-    x = SV
-    x = 20      # válido
-    x = 20.5    # erro: Inteiro -> Real
+## Identificadores, variáveis e constantes
 
-`SV` não fixa nem altera o tipo estável.
+Não existem `var`, `let`, `const` ou equivalentes.
 
-## Nomes, variáveis e constantes
+```text
+UM = 1    constante
+um = 1    variável
+```
 
-Não existem palavras `var`, `let` ou `const`.
+Uma constante não pode ser reatribuída no mesmo escopo, mas um bloco interno pode declarar uma constante de mesmo nome e sombrear a externa.
 
-- identificador em caixa alta: constante;
-- identificador em caixa baixa: variável;
-- constante não pode ser reatribuída no mesmo escopo;
-- constante externa pode ser sombreada em bloco interno;
-- variável visível já existente é reatribuída pelo vínculo mais próximo;
-- variável inexistente é criada no escopo atual.
-
-Um literal numérico não é identificador. Para um nome numeral usa-se escape:
-
-    `1` = 2
-    fale `1` == 2    # compara a variável escapada
-    fale 1 == 2      # compara literais: Fal
-
-## Constantes e funções padrão
-
-`PI`, `TAU`, `PHI` e `EULER` são vínculos imutáveis do ambiente padrão, não palavras reservadas.
-
-`PI` é `Real`; portanto possui a precisão de binary64. A Neftys não promete cem casas semanticamente válidas num `double`.
-
-`relog()` é uma função padrão destinada a benchmarks e retorna segundos como `Real`. A implementação de referência deverá usar uma fonte monotônica de tempo.
+Nomes numerais não competem com literais. `1` é um Inteiro; para um identificador chamado 1 usa-se `` `1` ``.
 
 ## Operadores
 
-Aritméticos:
+Aritmética: `+ - * /`.
 
-    +  -  *  /
+`-` pode ser unário em Inteiro e Real. `+` unário não existe.
 
-`-` também é unário para números. `+` unário não existe.
+`String + String` concatena. Se apenas um operando for String, o diagnóstico contém:
 
-Concatenação:
+`A expressão '+' deve ser usada entre duas strings: CONCATENATION FAILED!`
 
-    "Nef" + "tys"
+Comparação: `< > <= >=`.
 
-`+` com uma única string ou com String e outro tipo é erro. A mensagem-base definida é:
+Igualdade: `==`, `!=` e `diff`.
 
-    A expressão '+' deve ser usada entre duas strings: CONCATENATION FAILED!
+A igualdade é sensível ao tipo no runtime experimental: `1 == 1.0` é falso.
 
-Comparação e igualdade:
+Lógica: `!`, `e`, `ou`, com curto-circuito executável na VM.
 
-    <  >  <=  >=  ==  !=  diff
+Precedência, da menor para a maior:
 
-`diff` e `!=` possuem a mesma semântica. `<<` e `>>` não são comparadores e ficam reservados para possível deslocamento de bits futuro.
+```text
+ou
+e
+== != diff
+< > <= >=
++ -
+* /
+! - unário
+chamada() acesso.campo
+(...)
+```
 
-Lógica:
+## Blocos
 
-    !
-    e
-    ou
+Não há `{}`, `}` nem `;`. Espaços iniciais determinam bloco.
 
-`!`, `e` e `ou` exigem booleanos. `e` e `ou` deverão possuir curto-circuito no runtime de referência.
+```text
+se condição então
+    instrução
+    instrução
+fale "fora"
+```
 
-## Precedência
+O bloco termina na primeira linha não vazia que retorna a um nível de indentação anterior. EOF fecha os blocos restantes. O experimento recusa tabulações de indentação.
 
-Da menor para a maior:
+## Controle de fluxo
 
-    ou
-    e
-    == != diff
-    < > <= >=
-    + -
-    * /
-    ! -unário
-    chamada() e acesso.campo
-    (...)
+```text
+se condição então
+    ...
+senão se outra então
+    ...
+senão
+    ...
 
-`=` é atribuição em nível de instrução, não expressão de valor. Atribuições encadeadas como `a = b = 1` não fazem parte desta versão.
+enquanto condição faça
+    ...
 
-## Blocos por indentação
-
-Não existem `{}`, `}` nem `;`.
-
-Um bloco começa quando uma construção que exige corpo é seguida por uma linha com indentação maior. O bloco termina antes da primeira linha não vazia que volta a um nível anterior. EOF fecha os blocos abertos estruturalmente.
-
-O lexer experimental materializa a estrutura como `NEWLINE`, `INDENT` e `DEDENT`.
-
-Tabs são rejeitados nesta versão. Espaços são usados para indentação; quatro espaços são a convenção recomendada.
-
-Linhas vazias e comentários não alteram a pilha de indentação. Dentro de parênteses, quebras de linha podem ser tratadas como continuação.
-
-## Instruções
-
-Impressão:
-
-    fale "texto", valor
-
-Condicional:
-
-    se condição então
-        instruções
-    senão se outra então
-        instruções
-    senão
-        instruções
-
-Laços:
-
-    enquanto condição faça
-        instruções
-
-    para item em coleção faça
-        instruções
+para item em iterável faça
+    ...
+```
 
 `pare` e `continue` só são válidos dentro de laços.
 
+O conjunto de iteráveis da linguagem ainda não foi definido. A VM Python permite String apenas para demonstrar a mecânica de `para` sem inventar uma coleção ainda inexistente.
+
 ## Funções
 
-    fun soma(a, b)
-        retorne a + b
+```text
+fun soma(a, b)
+    retorne a + b
+```
 
-Chamada:
-
-    soma(1, 2)
-
-Funções são valores de primeira classe e podem existir em escopos locais. Funções que terminam sem `retorne` produzem `SV`. `retorne` sem expressão equivale a retornar `SV`.
-
-Closures pertencem ao contrato futuro do runtime; o experimento atual reconhece a estrutura, mas não executa closures.
+Funções são valores de primeira classe, podem ser locais e capturam o ambiente léxico. Uma função sem `retorne` produz SV.
 
 ## Classes
 
-    class Pessoa
-        fun inic(nome)
-            esse.nome = nome
+```text
+class Pessoa
+    fun inic(nome)
+        esse.nome = nome
 
-        fun apresentar()
-            fale esse.nome
+    fun falar()
+        fale esse.nome
+```
 
-Chamar uma classe cria uma instância e encaminha os argumentos para `inic`.
+Chamar a classe cria uma instância e encaminha os argumentos a `inic` quando ele existe.
 
-Campos são criados por atribuição. O runtime deverá estabilizar o tipo de um campo por instância seguindo a mesma ideia dos vínculos mutáveis.
+Herança é única:
 
-`esse` referencia a instância atual dentro de métodos.
+```text
+class Filha herda Base
+    fun inic(x)
+        sup.inic(x)
+```
 
-Herança única:
+Atribuir a `esse.campo` cria o campo se necessário. No experimento, campos possuem tipo estável por instância. A política futura de constantes em campos ainda não foi especificada.
 
-    class Filha herda Base
-        fun inic(x)
-            sup.inic(x)
+`inic` não produz um valor próprio; a chamada da classe produz a instância.
 
-`sup` só é válido em método de classe que possui superclasse.
+## Ambiente matemático e tempo
 
-`inic` pode terminar sem retorno ou com `retorne` sem valor; ele não pode devolver um valor diferente de `SV`. A chamada da classe devolve a instância.
+`PI`, `TAU`, `PHI` e `EULER` são vínculos imutáveis Real do ambiente padrão, não palavras reservadas do lexer.
+
+`relog()` retorna Real em segundos usando relógio monotônico na bancada Python.
+
+## Diagnósticos
+
+A personalidade ranzinza da Neftys vem depois da informação técnica: código estável, localização, causa e correção.
+
+Exemplos:
+
+```text
+Aff... sabe nem escrever um inteiro direito? Número e nome grudados não viram uma coisa só por amizade.
+```
+
+```text
+Não se reatribui um ponto flutuante a uma variável que recebeu um inteiro, seu doido!
+```
+
+Falhas internas não culpam o programa:
+
+```text
+NFS-I900
+Tá. Essa fui eu. O experimento tropeçou sozinho.
+```
 
 ## Memória
 
-A Neftys administrará memória automaticamente. Como objetos e closures podem formar ciclos, a direção recomendada é coleta de lixo por rastreamento, não mera contagem de referências.
-
-O momento exato da coleta não deve fazer parte da semântica observável do programa. Entretanto, a Neftys deverá poder **visualizar** raízes, objetos alcançáveis, objetos coletáveis e eventos de coleta como parte de sua proposta didática.
-
-## Gramática aproximada em EBNF
-
-    programa      ::= NOVALINHA* (instrucao NOVALINHA*)* EOF
-    bloco         ::= NOVALINHA INDENT instrucao (NOVALINHA+ instrucao)* NOVALINHA* DEDENT
-
-    instrucao     ::= atribuicao | fale | condicional | enquanto | para
-                    | funcao | classe | retorno | "pare" | "continue" | expressao
-
-    atribuicao    ::= alvo "=" expressao
-    alvo          ::= IDENTIFICADOR | posfixa "." IDENTIFICADOR
-    fale          ::= "fale" lista_expressoes?
-
-    condicional   ::= "se" expressao "então" bloco
-                      ("senão" "se" expressao "então" bloco)*
-                      ("senão" bloco)?
-
-    enquanto      ::= "enquanto" expressao "faça" bloco
-    para          ::= "para" IDENTIFICADOR "em" expressao "faça" bloco
-
-    funcao        ::= "fun" IDENTIFICADOR "(" parametros? ")" bloco
-    parametros    ::= IDENTIFICADOR ("," IDENTIFICADOR)*
-    retorno       ::= "retorne" expressao?
-
-    classe        ::= "class" IDENTIFICADOR ("herda" IDENTIFICADOR)? bloco
-
-    expressao     ::= ou
-    ou            ::= conjuncao ("ou" conjuncao)*
-    conjuncao     ::= igualdade ("e" igualdade)*
-    igualdade     ::= comparacao (("==" | "!=" | "diff") comparacao)*
-    comparacao    ::= adicao (("<" | ">" | "<=" | ">=") adicao)*
-    adicao        ::= multiplicacao (("+" | "-") multiplicacao)*
-    multiplicacao ::= unario (("*" | "/") unario)*
-    unario        ::= ("!" | "-") unario | posfixa
-    posfixa       ::= primaria ("(" argumentos? ")" | "." IDENTIFICADOR)*
-    argumentos    ::= expressao ("," expressao)*
-
-    primaria      ::= INTEIRO | REAL | STRING | "Ver" | "Fal" | "SV"
-                    | IDENTIFICADOR | "esse" | "sup" | "(" expressao ")"
-
-## Diagnósticos e personalidade
-
-A voz da Neftys é obscura, cínica e ranzinza. Isso não autoriza diagnósticos inúteis.
-
-Formato recomendado:
-
-    NFS-E330 [linha 2, coluna 1]
-    Não se reatribui um ponto flutuante a uma variável que recebeu um inteiro, seu doido!
-    2 | dois = 3.14
-      | ^
-    Como faz: mantenha o vínculo como inteiro ou use outro nome.
-
-Erros internos usam prefixo `NFS-I` e assumem responsabilidade, por exemplo:
-
-    NFS-I900
-    Tá. Essa fui eu. O experimento tropeçou sozinho.
-
-A personalidade nunca deve esconder causa, localização ou correção.
+O contrato da Neftys é gerenciamento automático de memória. A bancada Python ainda depende do próprio coletor do Python e, portanto, não demonstra o GC futuro. A implementação em Pinker deverá tornar heap, raízes, alcance e coleta observáveis sem tornar o instante exato da coleta parte da semântica do programa.

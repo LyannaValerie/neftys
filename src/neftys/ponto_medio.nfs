@@ -1,4 +1,4 @@
-cons: min, max = 5, 18
-var: a = (min + max) / 2
-
-falar: "O ponto médio é: ", a
+MIN = 5
+MAX = 18
+ponto = (MIN + MAX) / 2
+fale "O ponto médio é: ", ponto

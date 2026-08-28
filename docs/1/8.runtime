@@ -1,20 +1,13 @@
-1. Tempo de execução (runtime)
+9. Runtime
 
-Aqui, o código do usuário já precisa estar em um formato executável pela máquina.
-Falta, então, executá-lo - óbvio.
+`9-runtime.py` fornece os serviços que existem enquanto o programa roda.
 
-Se o compilamos para linguagem de máquina, basta pedir ao sistema operacional carregar o arquivo e ele sai rodando.
-Se o compilamos para bytecode, teremos a burocracia de iniciar a VM e carregar o programa nela.
+Ele mantém ambientes encadeados, vínculos mutáveis e imutáveis, tipo estável de variáveis e campos, funções/closures, classes, instâncias e métodos vinculados.
 
-Em ambos os casos, para todas as linguagens, exceto as mais básicas e de mais baixo nível, geralmente precisaremos de alguns serviços fornecidos pela nossa linguagem enquanto
-o programa está em execução.
+O ambiente padrão contém `PI`, `TAU`, `PHI`, `EULER` como Real e `relog()` baseado em relógio monotônico em segundos.
 
-Se a linguagem gerencia memória automaticamente, precisaremos de um garbage collector (coletor de lixo) para recuperar os bits não utilizados.
-Se a linguagem suporta testes do tipo "instance of" para vermos que tipo de objeto tem, então precisamos de alguma representação para rastrear o tipo de cada objeto durante a
-execução.
+A saída de booleanos usa `Verdadeiro!` e `Falso!`; os literais do código continuam sendo `Ver` e `Fal`.
 
-Tudo isso acontece durante a execução, ou em tempo de execução, apropriadamente chamado de runtime. 
+A memória automática definitiva ainda não está implementada: Python coleta os objetos desta bancada por nós. O contrato futuro da Neftys continua sendo gerenciamento automático de memória, preferencialmente por GC rastreador na implementação real em Pinker.
 
-Em uma linguagem compilada, o codigo que implementa o runtime é inserido diretamente no executável resultante. Go, por exemplo, cada aplicação compilada tem sua própria cópia
-do runtime de Go diretamente embutida nela.
-Em uma linguagem executada dentro de um interpretador ou VM, então o runtime vive lá. É assim que funcionam a maioria das implementações de linguagens como Java, Python e JS.
+Erros de runtime seguem a mesma política de diagnóstico: código estável, causa útil e personalidade ranzinza. Falha interna não culpa o usuário.
