@@ -1,51 +1,26 @@
-1.
+2. Lexer
 
-Após o código fonte nascer, vem o lexer, scanner ou o analisador léxico. Todos são termos para a exata mesma coisa.
+O lexer recebe o fluxo de caracteres e produz tokens com lexema, valor, linha e coluna.
 
-Optaremos pelo termo lexer.
+Na Neftys v1 a indentação é parte do léxico. O lexer emite `NEWLINE`, `INDENT` e `DEDENT` para tornar visíveis os blocos que no fonte não possuem `{}`.
 
-O lexer recebe o fluxo linear de caracteres do código fonte e os agrupa em uma série de algo mais próximo de palavras, chamados de lexemas e cada qual é caracterizada
-por um tipo, a saber, o token.
+Exemplo:
 
-Tomando como exemplo o arquivo "ponto_medio.nfs", temos:
+se Ver então
+    fale "sim"
+fale "fim"
 
-cons: min, max = 5, 18
-var: a = (min + max) / 2
+Produz conceitualmente:
 
-falar: "O ponto médio é: ", a
+SE VER ENTAO NEWLINE
+INDENT
+FALE STRING NEWLINE
+DEDENT
+FALE STRING NEWLINE
+EOF_TOKEN
 
-Podemos dizer que "cons" é um lexema, enquanto que "TokenCons" seria o token para ele.
-":" é um lexema, e "TokenDDot" seria o token
-"min" é um lexema, e "TokenIdentifier" o token
+Também são reconhecidos `Ver`, `Fal`, `SV`, Inteiro, Real, String, `e`, `ou`, `diff`, `<=`, `>=`, funções, classes, `esse`, `sup`, `retorne`, `pare` e `continue`.
 
-E assim sucessivamente.
+`1` é Inteiro. Para um identificador numeral usa-se escape: `` `1` ``. `<<` e `>>` não significam menor/maior igual; use `<=` e `>=`.
 
-O que poderia resultar em uma lista como esta: 
-
-TokenCons: 'cons'
-TokenDDot: ':'
-TokenIdentifier: 'min'
-TokenComma: ','
-TokenIdentifier: 'max'
-TokenAssign: '='
-TokenNumber: '5'
-TokenComma: ','
-TokenNumber: '18'
-TokenVar: 'var'
-TokenDDot: ':'
-TokenIdentifier: 'a'
-TokenAssign: '='
-TokenLParen: '('
-TokenIdentifier: 'min'
-TokenPlus: '+'
-TokenIdentifier: 'max'
-TokenRParen: ')'
-TokenDiv: '/'
-TokenNumber: '2'
-TokenFalar: 'falar'
-TokenDDot: ':'
-TokenString: '"O ponto médio é: "'
-TokenComma: ','
-TokenIdentifier: 'a'
-
-Aqui, os tokens estão no lado esquerdo e, os lexemas, no direito.
+Tabulação de indentação é recusada no experimento para que uma mesma largura visual não esconda estruturas diferentes.

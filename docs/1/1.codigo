@@ -1,21 +1,16 @@
-1.
+1. Código-fonte e caracteres
 
-O código fonte é o texto plano digitado no editor de código, caractere por caractere isso inclui espaços em branco, quebras de linha e tabulações.
+A entrada continua sendo texto puro, mas na Neftys v1 os espaços iniciais deixaram de ser ruído: eles determinam blocos.
 
-Não possui nenhum significado para a máquina, sendo apenas um punhado de bytes torrando armazenamento.
+Exemplo:
 
-O compilador não sabe "x" é uma variável, e etc. Não ainda...
+MIN = 5
+MAX = 18
+ponto = (MIN + MAX) / 2
+fale "O ponto médio é: ", ponto
 
+Não existem `cons:`, `var:`, `falar:` nem `;` na gramática atual.
 
-Para efeito prático, vamos considerar um possível arquivo com a seguinte instrução em neftys:
+`1-conversor.py` não interpreta o programa. Ele preserva cada caractere num artefato `.char`, inclusive espaços e quebras de linha. Isso é importante porque normalizar a indentação aqui alteraria o programa antes do lexer sequer vê-lo.
 
-#  ponto_medio.nfs
-cons: min, max = 5, 18
-var: a = (min + max) / 2
-
-falar: "O ponto médio é: ", a
-
-Que, para o computador, nada mais é que:
-
-['c', 'o', 'n', 's', ':', ' ', 'm', 'i', 'n', ',', ' ', 'm', 'a', 'x', ' ', '=', ' ', '5', ',', ' ', '1', '8', '\n', 'v', 'a', 'r', ':', ' ', 'a', ' ', '=', ' ', '(', 'm', 'i', 'n', ' ', '+', ' ', 'm', 'a', 'x', ')', ' ', '/', ' ', '2', '\n', '\n', 'f', 'a', 'l', 'a', 'r', ':', ' ', '"', 'O', ' ', 'p', 'o', 'n', 't', 'o', ' ', 'm', 'é', 'd', 'i', 'o', ' ', 'é', ':', ' ', '"', ',', ' ', 'a', '\n']
-
+O formato `.char` atual é JSON e contém uma lista de caracteres. Python é apenas a ferramenta do experimento; o contrato conceitual é fonte -> fluxo exato de caracteres.

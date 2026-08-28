@@ -1,0 +1,26 @@
+fun dobro(n)
+    retorne n * 2
+
+class Base
+    fun inic(valor)
+        esse.valor = valor
+
+    fun ler()
+        retorne esse.valor
+
+class Filha herda Base
+    fun inic(valor)
+        sup.inic(valor)
+
+contador = 0
+objeto = Filha(7)
+
+se objeto.ler() == 7 então
+    fale "objeto: ", objeto.ler()
+
+nenhum = SV
+nenhum = 4
+
+fale "dobro: ", dobro(nenhum)
+fale "pi: ", PI
+fale !Fal
