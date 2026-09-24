@@ -1,18 +1,37 @@
-3. Parser e AST
+1. 
 
-`3-parser.py` consome `.tkn` ou reconstrói os tokens a partir de `.nfs/.char` e produz a AST v1.
+A sintaxe é o que determina as estruturas permitidas da linguagem.
+O que descreve formalmente essas estruturas, é a gramática.
 
-A precedência implementada é:
+Logo, o parser, seria o algoritmo que reconhece as estruturas permitidas da linguagem.
+A gramática entrará em outro momento.
 
-ou
- e
- == != diff
- < > <= >=
- + -
- * /
- ! e - unário
- chamada() e acesso.campo
+No entanto, essa estrutura permitida precisa ser representada, o que é feito através da AST - Abstract Syntax Tree -, ou Árvore Sintática Abstrata, para os íntimos.
 
-O parser representa atribuições, `fale`, `se/então/senão`, `enquanto/faça`, `para/em/faça`, `fun`, `retorne`, `class`, `herda`, `esse`, `sup`, `pare` e `continue`.
+Tomemos nosso código exemplo (ponto_medio.nfs):
+cons: min, max = 5, 18
+var: a = (min + max) / 2
 
-A AST serializada em `.ast` é JSON para que as etapas seguintes não precisem reanalisar uma árvore desenhada para humanos. `--arvore` mostra a representação visual do mesmo objeto.
+falar: "O ponto médio é: ", a
+
+
+Sua árvore sintática seria:
+
+Programa
+├── DeclaracaoConstantes
+│   ├── Vinculo
+│   │   ├── nome: min
+│   │   └── Numero: 5.0
+│   └── Vinculo
+│       ├── nome: max
+│       └── Numero: 18.0
+├── DeclaracaoVariavel
+│   ├── nome: a
+│   └── Divisao
+│       ├── Soma
+│       │   ├── Identificador: min
+│       │   └── Identificador: max
+│       └── Numero: 2.0
+└── Falar
+    ├── String: "O ponto médio é: "
+    └── Identificador: a
